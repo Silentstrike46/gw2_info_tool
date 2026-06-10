@@ -1,0 +1,51 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+build/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test coverage
+coverage/
+
+# Environment / secrets (never commit real values)
+.env
+.env.*
+!.env.example
+*.local
+
+# OS files
+.DS_Store
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.history/
+.zed
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+
+# AI / Claude (commit shared project settings; ignore local/personal state)
+.claude/*.local.*
+.claude/settings.local.json
+.claude/worktrees/
+
+# Local-only scratch
+.local/
