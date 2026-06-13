@@ -1,0 +1,11 @@
+# Build output
+dist
+dist-ssr
+build
+coverage
+
+# Dependencies
+node_modules
+
+# Lockfiles (let the tooling own their format)
+package-lock.json
