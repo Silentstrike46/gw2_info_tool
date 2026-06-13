@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "tsc -b"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

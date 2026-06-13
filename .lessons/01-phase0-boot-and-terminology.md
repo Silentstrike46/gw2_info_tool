@@ -15,9 +15,11 @@ starts up, plus the frontend vocabulary needed to follow along._
   `access-control-allow-origin: *`, so the browser can call it directly.
 
 ### The scaffold command, decoded
+
 ```bash
 npm create vite@latest . -- --template react-ts
 ```
+
 - `npm create vite@latest` → download & run the `create-vite` scaffolder (latest).
 - `.` → scaffold into the **current directory**.
 - `--` → POSIX **"end of options"** marker: everything after it is passed through
@@ -29,7 +31,7 @@ npm create vite@latest . -- --template react-ts
 
 ## The DOM (Document Object Model)
 
-When the browser loads HTML *text*, it parses it into an in-memory **tree of
+When the browser loads HTML _text_, it parses it into an in-memory **tree of
 objects** — one node per tag. That tree is the DOM. Key point: **the DOM is not
 the HTML file**; it's the browser's live object representation that JS reads and
 edits. Whatever the DOM looks like right now is what's on screen.
@@ -49,12 +51,12 @@ React computes the minimal DOM changes. You rarely touch the DOM directly.
 
 ## File extensions: the 2×2 grid
 
-| Ext   | Language   | Can contain JSX? |
-|-------|------------|------------------|
-| `.js` | JavaScript | no               |
-| `.jsx`| JavaScript | yes              |
-| `.ts` | TypeScript | no               |
-| `.tsx`| TypeScript | **yes**          |
+| Ext    | Language   | Can contain JSX? |
+| ------ | ---------- | ---------------- |
+| `.js`  | JavaScript | no               |
+| `.jsx` | JavaScript | yes              |
+| `.ts`  | TypeScript | no               |
+| `.tsx` | TypeScript | **yes**          |
 
 `.tsx` = TypeScript **+** JSX. Pure-logic files (no JSX) are `.ts`; components are
 `.tsx`. None of `.ts/.tsx/.jsx` run in a browser — they're all compiled to `.js`
@@ -72,13 +74,15 @@ first (Vite does it).
   as an ES module, which is what makes `import`/`export` work.
 
 ### default vs named exports
+
 ```ts
 // App.tsx
-export default App            // one "default" export per file
+export default App; // one "default" export per file
 // main.tsx
-import App from './App.tsx'   // name is arbitrary for a default import
-import Anything from './App.tsx'  // also valid — just renaming the default
+import App from "./App.tsx"; // name is arbitrary for a default import
+import Anything from "./App.tsx"; // also valid — just renaming the default
 ```
+
 - A file can have **at most one** `default` export; the importer picks any name.
 - **Named** exports must be imported by their exact name (with braces):
   `export function foo() {}` → `import { foo } from './x'` (rename with
@@ -91,19 +95,24 @@ import Anything from './App.tsx'  // also valid — just renaming the default
 A React SPA has **one** HTML page; everything is JS building DOM nodes inside it.
 
 1. **`index.html`** — the shell. Two key lines:
+
    ```html
-   <div id="root"></div>                              <!-- empty mount point -->
-   <script type="module" src="/src/main.tsx"></script> <!-- entry point -->
+   <div id="root"></div>
+   <!-- empty mount point -->
+   <script type="module" src="/src/main.tsx"></script>
+   <!-- entry point -->
    ```
+
    React fills `#root`; Vite compiles the `.tsx` entry on the fly.
 
 2. **`main.tsx`** — the only place the app touches the real DOM directly:
+
    ```tsx
-   createRoot(document.getElementById('root')!).render(
+   createRoot(document.getElementById("root")!).render(
      <StrictMode>
        <App />
      </StrictMode>,
-   )
+   );
    ```
    - `createRoot(node).render(tree)` — React 18+ entry API: claim the `#root`
      node, render the component tree **into** it (doesn't replace the div).
@@ -128,7 +137,7 @@ string and not real HTML; a compiler rewrites each tag into a "create element"
 function call returning a plain JS object (a React element):
 
 ```tsx
-return <h1>Get started</h1>
+return <h1>Get started</h1>;
 // compiles to ~ jsx('h1', { children: 'Get started' })
 ```
 
