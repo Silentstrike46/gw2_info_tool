@@ -95,7 +95,7 @@ export interface CharacterInfo extends CharacterInfoShort {
   deaths: number;
   crafting: CraftingDisciplineInfo[];
   backstory: string[]; // backstory answer IDs
-  wvw_abilities: WvwAbilityInfo[];
+  wvwAbilities: WvwAbilityInfo[];
   guild?: string;
   title?: number; // title ID
   // Skipping the unknown/placeholder API fields (equipment, recipes,
