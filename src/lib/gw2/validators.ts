@@ -99,11 +99,11 @@ export function parseCharacterShort(raw: unknown): CharacterInfoShort {
   assert(typeof data.age === "number", "age must be a number");
 
   // enum fields (type guards)
-  assert(isRace(data.race), `invalid race: ${data.race}`);
-  assert(isGender(data.gender), `invalid gender: ${data.gender}`);
+  assert(isRace(data.race), `invalid race: ${String(data.race)}`);
+  assert(isGender(data.gender), `invalid gender: ${String(data.gender)}`);
   assert(
     isProfession(data.profession),
-    `invalid profession: ${data.profession}`,
+    `invalid profession: ${String(data.profession)}`,
   );
 
   const character: CharacterInfoShort = {
