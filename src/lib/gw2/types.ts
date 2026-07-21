@@ -7,9 +7,15 @@
 // ---------------------------------------------------------------------------
 //                          Static value lists
 // ---------------------------------------------------------------------------
+// NOTE: We assume no properties contain dashes in the string. If they do, it will
+// corrupt the label buckets later. No "-" in strings here!
+// NOTE: Order here matters! The order of values in these arrays is used to sort the
+// rows and columns of the combinations table. If you change the order, you will change
+// the order of the table.
+// Order chosen here matches the order of the GW2 character creation screens.
 export const GW2_RACES = [
-  "Human",
   "Charr",
+  "Human",
   "Norn",
   "Asura",
   "Sylvari",
@@ -19,12 +25,12 @@ export const GW2_PROFESSIONS = [
   "Guardian",
   "Warrior",
   "Revenant",
-  "Thief",
   "Engineer",
+  "Thief",
   "Ranger",
+  "Mesmer",
   "Necromancer",
   "Elementalist",
-  "Mesmer",
 ] as const;
 export const GW2_ARMOR_TYPES = ["Heavy", "Medium", "Light"] as const;
 export const GW2_PROFESSION_TO_ARMOR_TYPE = {
@@ -102,3 +108,19 @@ export interface CharacterInfo extends CharacterInfoShort {
   // training, bags, equipment_pvp, specializations, skills).
   // Add them later if a feature needs them.
 }
+
+// ---------------------------------------------------------------------------
+//                          Groupable Properties / Combinations
+// ---------------------------------------------------------------------------
+// single source of truth for both the union of groupable properties and the
+// value lists fill-blanks iterates.
+export const GROUPABLE_VALUE_LISTS = {
+  race: GW2_RACES,
+  gender: GW2_GENDERS,
+  profession: GW2_PROFESSIONS,
+  armor: GW2_ARMOR_TYPES,
+} as const;
+
+// value -> type: `typeof` gives the object's type; `keyof` gives the union of its keys.
+// = "race" | "gender" | "profession" | "armor"
+export type GroupableProperty = keyof typeof GROUPABLE_VALUE_LISTS;
