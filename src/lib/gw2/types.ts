@@ -75,35 +75,35 @@ export type CharacterFlag = (typeof GW2_CHARACTER_FLAGS)[number];
 //                          Character information
 // ---------------------------------------------------------------------------
 export interface CraftingDisciplineInfo {
-  discipline: CraftingDiscipline;
-  rating: number; //current crafting level
-  active: boolean;
+  readonly discipline: CraftingDiscipline;
+  readonly rating: number; //current crafting level
+  readonly active: boolean;
 }
 
 export interface CharacterInfoShort {
-  name: string;
-  race: Race;
-  gender: Gender;
-  profession: Profession;
-  armor: ArmorType; // derived from profession; not sent by the API
-  level: number;
-  age: number; // seconds played
-  created: string; // ISO-8601 timestamp
+  readonly name: string;
+  readonly race: Race;
+  readonly gender: Gender;
+  readonly profession: Profession;
+  readonly armor: ArmorType; // derived from profession; not sent by the API
+  readonly level: number;
+  readonly age: number; // seconds played
+  readonly created: string; // ISO-8601 timestamp
 }
 
 export interface WvwAbilityInfo {
-  id: string;
-  rank: number;
+  readonly id: string;
+  readonly rank: number;
 }
 
 export interface CharacterInfo extends CharacterInfoShort {
-  flags: CharacterFlag[];
-  deaths: number;
-  crafting: CraftingDisciplineInfo[];
-  backstory: string[]; // backstory answer IDs
-  wvwAbilities: WvwAbilityInfo[];
-  guild?: string;
-  title?: number; // title ID
+  readonly flags: readonly CharacterFlag[];
+  readonly deaths: number;
+  readonly crafting: readonly CraftingDisciplineInfo[];
+  readonly backstory: readonly string[]; // backstory answer IDs
+  readonly wvwAbilities: readonly WvwAbilityInfo[];
+  readonly guild?: string;
+  readonly title?: number; // title ID
   // Skipping the unknown/placeholder API fields (equipment, recipes,
   // training, bags, equipment_pvp, specializations, skills).
   // Add them later if a feature needs them.

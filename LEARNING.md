@@ -8,7 +8,9 @@ each lesson live in [`.lessons/`](./.lessons/).
 
 **Phase 1's pure-logic layer is complete.** `io.ts` closes it out - `CharacterInfoShort[]` round-trip (`charactersToJson`/`FromJson`, `charactersToCsv`/`FromCsv`, all re-validating through `parseCharacterShort`) plus the two export-only `CombinationInfo` serializers (`combinationInfoToJson`/`ToCsv`), all green (114 tests). See [lesson 05](./.lessons/05-phase1-csv-json-io.md) for the write-up. `types.ts`, `validators.ts`, and `combinations.ts` were already done.
 
-**Next: clear the `readonly` character-types follow-up below (the gate before Phase 2), then start Phase 2 - the API layer** (`fetch` the GW2 API, typed responses, MSW mocking). This is where React-adjacent concepts finally begin (`async`/`await`, MSW), though still no React components yet.
+The `readonly` character-types follow-up (the gate before Phase 2) is now done - the character interfaces in `types.ts` are deeply immutable (type-only change, 114 tests still green).
+
+**Next: Phase 2 - the API layer** (`fetch` the GW2 API, typed responses, MSW mocking). This is where React-adjacent concepts finally begin (`async`/`await`, MSW), though still no React components yet.
 
 Run the type check with **`npm run typecheck`** (= `tsc -b`). NOT
 `tsc --noEmit` against the root config — that checks nothing (see lesson 02). Run
@@ -34,7 +36,7 @@ Agreed in discussion but deliberately out of scope for the commit in progress. E
 
 - [ ] **(Phase 5, UI) Handle the profession/armor correlation.** Armor is _derived_ from profession, so selecting both and filling produces 27 rows of which 18 are structurally impossible (`Guardian-Light` can never exist). Correct per spec - filling is the user's choice - but the property picker should discourage it: grey out `armor` once `profession` is selected (or vice versa), or at least keep that pairing out of the defaults. Every other property pair is independent; these two are the only correlated ones.
 
-- [ ] **(before Phase 2) Make the character types immutable (`types.ts`).** The combination result types use `readonly` (both the property modifier and `readonly T[]`), but that protection is shallow: it locks the arrays, not the character objects inside them, so `entry.characters[0].name = "..."` still compiles. Mark the fields of `CharacterInfoShort` / `CharacterInfo` (and `CraftingDisciplineInfo` / `WvwAbilityInfo`) `readonly`. Expected to be cheap: `validators.ts` returns freshly built object literals, and object literals satisfy `readonly` fields at construction, so only the type definitions should need to change. Verify with `npm run typecheck` + `npm run test:run`.
+- [x] **(before Phase 2) Make the character types immutable (`types.ts`).** _Done 2026-07-25 — type-only change, 114 tests still green._ The combination result types use `readonly` (both the property modifier and `readonly T[]`), but that protection is shallow: it locks the arrays, not the character objects inside them, so `entry.characters[0].name = "..."` still compiles. Mark the fields of `CharacterInfoShort` / `CharacterInfo` (and `CraftingDisciplineInfo` / `WvwAbilityInfo`) `readonly`. Expected to be cheap: `validators.ts` returns freshly built object literals, and object literals satisfy `readonly` fields at construction, so only the type definitions should need to change. Verify with `npm run typecheck` + `npm run test:run`.
 
 ## Roadmap
 
