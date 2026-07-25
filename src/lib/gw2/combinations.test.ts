@@ -1,39 +1,19 @@
 import { describe, it } from "vitest";
 
 import { expect } from "vitest";
-import { type CharacterInfoShort, type GroupableProperty } from "./types";
+import { type GroupableProperty } from "./types";
 import { getCombinations } from "./combinations";
-
-/**
- * Generates a valid default character, merged with the fields a test cares about.
- * @param overrides - fields to override in the default character
- * @returns a valid CharacterInfoShort object
- */
-function character(overrides: Partial<CharacterInfoShort>): CharacterInfoShort {
-  return {
-    name: "Default Name",
-    race: "Human",
-    gender: "Male",
-    profession: "Guardian",
-    armor: "Heavy",
-    level: 80,
-    age: 0,
-    created: new Date().toISOString(),
-    ...overrides,
-  };
-}
+import { character } from "../../testutils";
 
 describe("getCombinations - no grouping", () => {
   const sample_chars = [character({}), character({}), character({})];
   const properties: GroupableProperty[] = [];
   const result = getCombinations(sample_chars, properties);
   it("returns a single All Characters entry when properties is empty", () => {
-    expect(result.combinations.length).toEqual(1);
+    expect(result.combinations).toHaveLength(1);
   });
   it("counts every character in the All Characters entry", () => {
-    expect(result.combinations[0].characters.length).toEqual(
-      sample_chars.length,
-    );
+    expect(result.combinations[0].characters).toHaveLength(sample_chars.length);
   });
   it("gives the All Characters entry an empty values bag", () => {
     expect(result.combinations[0].values).toEqual({});
@@ -74,7 +54,7 @@ describe("getCombinations - grouping without fill", () => {
   const resultMultiple = getCombinations(characters, propertiesMultiple);
 
   it("creates one entry per distinct value of a single property", () => {
-    expect(result.combinations.length).toEqual(2);
+    expect(result.combinations).toHaveLength(2);
   });
   it("omits values that no character has", () => {
     // Compared as Sets: row order is not guaranteed until the sort lands.
@@ -99,7 +79,7 @@ describe("getCombinations - grouping without fill", () => {
     expect(resultMultiple.label).toEqual("profession-race");
   });
   it("creates one entry per combination present for multiple properties", () => {
-    expect(resultMultiple.combinations.length).toEqual(2);
+    expect(resultMultiple.combinations).toHaveLength(2);
   });
   it("orders each entry label by the properties argument order", () => {
     // profession before race, because that is the argument order.
@@ -159,7 +139,7 @@ describe("getCombinations - fillBlanks", () => {
   });
   it("returns rows equal to the product of the value list lengths", () => {
     // 2 genders x 3 armor types, regardless of what the account contains.
-    expect(filled.combinations.length).toEqual(6);
+    expect(filled.combinations).toHaveLength(6);
   });
   it("echoes the fillBlanks setting on the wrapper", () => {
     expect(filled.fillBlanks).toEqual(true);
@@ -167,7 +147,7 @@ describe("getCombinations - fillBlanks", () => {
   });
   it("omits the empty cells when fillBlanks is off", () => {
     const unfilled = getCombinations(characters, properties);
-    expect(unfilled.combinations.length).toEqual(2);
+    expect(unfilled.combinations).toHaveLength(2);
   });
 });
 

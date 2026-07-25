@@ -7,14 +7,14 @@ import {
 } from "./types";
 type CombinationValues = Partial<Record<GroupableProperty, string>>;
 
-interface CombinationEntry {
+export interface CombinationEntry {
   readonly label: string; // "Charr-Guardian" — stable id / export handle
   readonly values: CombinationValues; // { race: "Charr", profession: "Guardian" }
   readonly count: number; // invariant: === characters.length
   readonly characters: readonly CharacterInfoShort[];
 }
 
-interface CombinationInfo {
+export interface CombinationInfo {
   readonly label: string; // "profession-race", or "All Characters"
   readonly properties: readonly GroupableProperty[]; // echoed input
   readonly fillBlanks: boolean; // echoed setting

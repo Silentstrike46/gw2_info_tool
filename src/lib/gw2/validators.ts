@@ -12,16 +12,7 @@ import {
   type CharacterInfoShort,
 } from "./types";
 
-/**
- * Assert that the condition is true, and throw an error if not.
- *
- * @param condition - condition to assert is true
- * @param message - Message to throw should condition fail
- */
-function assert(condition: unknown, message: string): asserts condition {
-  if (!condition) throw new Error(message);
-}
-
+import { assert } from "../asserts";
 // ------------------------ TYPE GUARDS ----------------------------------------
 /**
  * Narrows unknown value to a known GW2 race.
