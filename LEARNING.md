@@ -10,7 +10,9 @@ each lesson live in [`.lessons/`](./.lessons/).
 
 The `readonly` character-types follow-up (the gate before Phase 2) is now done - the character interfaces in `types.ts` are deeply immutable (type-only change, 114 tests still green).
 
-**Next: Phase 2 - the API layer** (`fetch` the GW2 API, typed responses, MSW mocking). This is where React-adjacent concepts finally begin (`async`/`await`, MSW), though still no React components yet.
+**Phase 2 is underway.** Unit 2a - the client - is done: `src/lib/gw2/api.ts` holds `Gw2ApiClient` + `Gw2ApiError`, and the port's headline finding is that the Python handler's `Authorization: Bearer` header **cannot work from a browser** (the GW2 backend 404s the CORS preflight), so the key and schema version go in the query string. Also closed the standard-library `any` holes project-wide via `src/unknown-globals.d.ts`, and pinned `strict: true`. See [lesson 06](./.lessons/06-phase2-api-layer.md) (in progress).
+
+**Next: unit 2b - MSW.** Install `msw`, wire `setupServer`, and write `api.test.ts` (happy path, each error `kind`, no `Authorization` header, no key in any message). No React components yet.
 
 Run the type check with **`npm run typecheck`** (= `tsc -b`). NOT
 `tsc --noEmit` against the root config — that checks nothing (see lesson 02). Run
@@ -35,6 +37,20 @@ Agreed in discussion but deliberately out of scope for the commit in progress. E
       `count`, `characters`. Same name-squashing the table display will likely need.
 
 - [ ] **(Phase 5, UI) Handle the profession/armor correlation.** Armor is _derived_ from profession, so selecting both and filling produces 27 rows of which 18 are structurally impossible (`Guardian-Light` can never exist). Correct per spec - filling is the user's choice - but the property picker should discourage it: grey out `armor` once `profession` is selected (or vice versa), or at least keep that pairing out of the defaults. Every other property pair is independent; these two are the only correlated ones.
+
+- [ ] **(Phase 4, UI) Validate the API-key input in the form.** Disable submit on an
+      empty/whitespace-only key so the client-side guard is never the user's first
+      feedback. The guard lives in `Gw2ApiClient`'s private `request()` (not the
+      constructor) deliberately: an empty key is not something _we_ detect - the API
+      returns `401 {"text": "Invalid access token"}` for it, which maps to the same
+      `kind: "invalid-key"` - so the guard only saves a doomed round trip and must not
+      reshape the public contract. Keeping it at the request site also gives one error
+      channel for the whole "your key doesn't work" family (empty, malformed, revoked,
+      expired, wrong scope), only the first of which is knowable without the network;
+      avoids a throw during render once the client is built in a `useMemo`; and leaves
+      key-less endpoints (e.g. `/v2/build`) constructible. Keep the check dumb
+      (`.trim() !== ""`) - never validate the _shape_ of a key, since a well-formed key
+      can still be revoked, so shape checks are UX only and belong in the form.
 
 - [x] **(before Phase 2) Make the character types immutable (`types.ts`).** _Done 2026-07-25 — type-only change, 114 tests still green._ The combination result types use `readonly` (both the property modifier and `readonly T[]`), but that protection is shallow: it locks the arrays, not the character objects inside them, so `entry.characters[0].name = "..."` still compiles. Mark the fields of `CharacterInfoShort` / `CharacterInfo` (and `CraftingDisciplineInfo` / `WvwAbilityInfo`) `readonly`. Expected to be cheap: `validators.ts` returns freshly built object literals, and object literals satisfy `readonly` fields at construction, so only the type definitions should need to change. Verify with `npm run typecheck` + `npm run test:run`.
 
