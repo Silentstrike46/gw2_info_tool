@@ -40,7 +40,7 @@ export function charactersFromJson(text: string): CharacterInfoShort[] {
   // 2. Assert it's an array; throw a clear Error if not.
   assert(Array.isArray(raw), "character JSON must be a list.");
   const returnCharacters: CharacterInfoShort[] = [];
-  for (const item of raw as unknown[]) {
+  for (const item of raw) {
     const entry = parseCharacterShort(item);
     returnCharacters.push(entry);
   }

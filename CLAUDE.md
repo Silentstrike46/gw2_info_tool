@@ -47,6 +47,16 @@ Do not jump ahead and implement things on the user's behalf unless explicitly as
 - **Lint/format:** ESLint + Prettier
 - **Data fetching:** raw `fetch` + hooks first; introduce TanStack Query later.
 
+**Non-standard type signatures — read before you're surprised by one.**
+[`src/unknown-globals.d.ts`](./src/unknown-globals.d.ts) re-declares three
+standard-library functions to return `unknown` instead of `any`:
+`JSON.parse()`, `.json()` on `Response`/`Request`, and `Array.isArray()` (which
+narrows to `unknown[]`, not `any[]`). So these do **not** behave as MDN or any
+tutorial describes — you must narrow before use, usually via the validators in
+`src/lib/gw2/validators.ts`. This is deliberate: those three are where untrusted
+outside data enters the app, and `any` disables checking silently rather than
+demanding a check. See that file's header for the full rationale.
+
 ## Progress
 
 See [LEARNING.md](./LEARNING.md) for the phase roadmap, current progress, and the

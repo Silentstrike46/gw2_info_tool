@@ -52,6 +52,14 @@ for (const item of raw as unknown[]) {
 }
 ```
 
+> **Superseded in [lesson 06](./06-phase2-api-layer.md) — for this project only.**
+> `src/unknown-globals.d.ts` now re-declares `JSON.parse` and `Array.isArray` to yield
+> `unknown` by default, so both the `: unknown` annotation and the `as unknown[]` cast
+> above are redundant _here_ (`no-unnecessary-type-assertion` flags the cast, and the
+> live `io.ts` no longer has it). The snippet is kept as written because this is the
+> **stock TypeScript behaviour** you will meet in every project without that override —
+> where you must still narrow by hand.
+
 Two JS/TS notes:
 
 - **`Array.isArray` on `unknown` narrows to `any[]`**, not `unknown[]` — so the `raw as

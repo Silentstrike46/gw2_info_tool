@@ -15,6 +15,9 @@
     "noEmit": true,
 
     /* Linting */
+    // Default in TypeScript 6.0+, pinned explicitly so the guarantee is stated
+    // rather than inherited — and so a downgrade can't silently relax it.
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
