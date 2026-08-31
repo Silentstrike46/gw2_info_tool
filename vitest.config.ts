@@ -8,5 +8,6 @@ export default defineConfig({
     // Pure-logic tests for now; switch to "jsdom" when we test components.
     environment: "node",
     include: ["src/**/*.test.ts"],
+    setupFiles: ["./src/test/setup.ts"],
   },
 });
