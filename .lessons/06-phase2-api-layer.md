@@ -4,8 +4,8 @@ _Date: 2026-07-28. Porting the Python `GW2APIRequestHandler` to `src/lib/gw2/api
 `Gw2ApiClient` + `Gw2ApiError`, plus a project-wide tightening of the standard-library
 `any` signatures. Still framework-agnostic — no React._
 
-> **In progress.** Unit 2a (the client) is done. Unit 2b — MSW mocking and `api.test.ts` —
-> is still to come, and gets appended here.
+> **Complete.** Unit 2a (the client) and unit 2b (MSW mocking + `api.test.ts`, 13 tests)
+> are both done. Phase 2 is finished; Phase 3 (the React shell) is next.
 
 ---
 
@@ -278,15 +278,129 @@ The toolchain proves code is _well-typed_. It never proves it's _correct_.
 
 ---
 
-## Open thread for next session
+## Unit 2b — the test layer
 
-**Unit 2b — MSW.** Install `msw` as a dev dependency, wire `setupServer` with the
-request-lifecycle hooks, and write `api.test.ts`: the happy path, each error `kind`, the
-absence of an `Authorization` header, and that no message contains the key. Two things to
-settle there:
+`src/lib/gw2/api.test.ts` — 13 tests, all mocked through MSW (no real network). Covers the
+happy path plus every `Gw2ErrorKind`: `invalid-key` (401/403 and the empty-key fail-fast),
+`rate-limited` (429), `server` (500, asserting `.status`), `malformed` (three distinct
+sources — see below), `network`, and `timeout`. Plus the two structural guards: no
+`Authorization` header, and no API key in any error message.
 
-- Whether Node's `fetch` really rejects a timeout with a `DOMException` named
-  `"TimeoutError"` — `api.ts` currently assumes it does, and the test will confirm or
-  refute it empirically.
-- `Body.json()` now returns `unknown` for `Request` too, so MSW handlers that inspect an
-  incoming body will need narrowing in test code as well.
+**MSW wiring.** `msw` as a dev dependency; a shared `src/test/setup.ts` holds
+`export const server = setupServer()` (no default handlers — each test registers its own
+with `server.use(...)`) and the three lifecycle hooks: `beforeAll(server.listen({
+onUnhandledRequest: "error" }))`, `afterEach(server.resetHandlers())`,
+`afterAll(server.close())`. Registered via `setupFiles: ["./src/test/setup.ts"]` in
+`vitest.config.ts`; environment stays `"node"` (MSW's `setupServer` intercepts Node's
+native fetch — no jsdom needed). `onUnhandledRequest: "error"` is the guarantee: a stray
+un-mocked request fails the test instead of hitting the real API. Handlers match the
+**real** default URL (`https://api.guildwars2.com/v2/characters`) so the test exercises the
+real config — no `baseUrl` override.
+
+**`Omit<T, K>` — the wire-vs-domain type.** The happy-path test needs two shapes of the
+same data: the **wire body** the mock returns (no `armor` — the real API doesn't send it;
+`parseCharacterShort` _derives_ it from profession, `validators.ts:105`) and the **expected**
+parsed result (armor present). The clean model is `Omit<CharacterInfoShort, "armor">[]` for
+`wireBody`, then `expected` spreads each row and adds the one field as a **literal**:
+
+```ts
+const wireBody: Omit<CharacterInfoShort, "armor">[] = [ { name, race, ..., /* no armor */ } ];
+const expected: CharacterInfoShort[] = [ { ...wireBody[0], armor: "Heavy" } ];
+```
+
+- `Omit` still type-checks every remaining field (a bad `race` fails to compile) — it solves
+  the "type the JSON but drop one required field" problem that a bare object literal or an
+  `as` cast can't.
+- **Armor is a hardcoded literal, not `armorForProfession(...)`** — asserting the derivation,
+  not recomputing it with the code under test (the lesson-05 rule).
+- Honest caveat: the parser _ignores_ input armor, so stripping it is a **fidelity** fix
+  (match the real endpoint), not a correctness one — it just costs nothing via `Omit`. On the
+  real API the response has dozens of extra fields; mock only the subset the parser reads.
+
+**Dead end — destructure-omit trips the linter.** `expected.map(({ armor, ...rest }) => rest)`
+is the idiomatic strip and `tsc` accepts it (`noUnusedLocals` ignores rest-siblings), but
+ESLint's `@typescript-eslint/no-unused-vars` flags the unused `armor` (`ignoreRestSiblings`
+defaults to `false`). Flipping that rule is a lint-config loosening (house-rule "ask first"),
+and unnecessary — the `Omit`-literal approach above needs no throwaway binding. `delete
+row.armor` is also out: "the operand of a `delete` operator must be optional."
+
+**Test hygiene reinforced.** `toStrictEqual` over `toEqual` (catches `undefined`-vs-absent on
+the freshly built parse result); fixed `created` string over `new Date().toISOString()` (a
+fixture reads as deterministic); don't comment the _language feature_ (`// Omit: ...`) —
+comment the _domain reason_ (`// wire body has no armor; the parser derives it`).
+
+**Asserting a thrown custom error — two idioms, one trap.** Reading a custom field like
+`err.kind` needs the caught instance, so:
+
+- `try { await fn(); expect.unreachable("should have thrown"); } catch (err) { if (!(err
+instanceof Gw2ApiError)) throw err; expect(err.kind).toBe(...); }` — explicit, and the
+  only form that also asserts the _type identity_. Two subtleties: `catch (err)` is typed
+  `unknown` under strict (`useUnknownInCatchVariables`), so you must narrow before touching
+  `.kind`; and `expect(err).toBeInstanceOf(...)` does **not** narrow for the type-checker
+  (it's a runtime matcher). The `if (!(err instanceof ...)) throw err` line does both jobs —
+  it narrows _and_ re-throws the `expect.unreachable` error on the no-throw path, so the
+  test can't pass vacuously.
+- `await expect(fn()).rejects.toMatchObject({ kind, status })` — terser, fails if the
+  promise resolves, no `unknown`-narrowing. Trade-off: it does **not** assert
+  `instanceof Gw2ApiError` (a plain object with those keys would match). Acceptable here
+  because every non-OK status throws through the _same_ construction site the try/catch case
+  already pins as a `Gw2ApiError`. Used B for most, A for one — a deliberate split.
+
+**DRY the handler, not the assertions.** A `CHARACTERS_URL` constant plus a
+`mockStatus(status)` helper (one `server.use(http.get(...))`) kills the most-repeated line
+across the status tests. The _assertions_ stayed longhand — a premature `expectApiError()`
+wrapper would have fought the `malformed` and request-inspection cases, which need different
+bodies and checks. Extract the repetition that's actually stable; leave the rest.
+
+**One `kind`, three code paths.** `malformed` is thrown from three places, each tested
+separately: (1) `response.json()` itself rejects — mock a raw non-JSON 200
+(`new HttpResponse("NotJSON", ...)`; `HttpResponse.json` _always_ emits valid JSON, so a raw
+body is the only way to hit this); (2) valid JSON that isn't an array — the
+`!Array.isArray(raw)` guard; (3) a valid array with one element that fails
+`parseCharacterShort`. Identical assertions, different branches — coverage is about the path,
+not the observable `kind`.
+
+**Test the field you mean to break — mind validation order.** For path (3) the bad element
+must be _otherwise complete_. `parseCharacterShort` checks `name`/`level`/`age`/`created`
+(typeof) **before** the enum fields, so an element missing `level` fails on `"level must be a
+number"` and never reaches the `race` check. Build it as
+`{ ...character({ name: "BadChar" }), race: "Dwarf" }` — a full valid character with exactly
+one field corrupted — then assert the wrapped **cause** to prove _which_ thing failed:
+`cause: { message: "invalid race: Dwarf" }`. That pins causation _and_ exercises the
+`Gw2ApiError` `{ cause }` forwarding, upgrading the test from "something failed" to "this
+element failed."
+
+**Gotcha — asymmetric matchers are typed `any`.** `expect.objectContaining(...)` /
+`expect.stringContaining(...)` return `any`, so nesting them as object-literal values trips
+`strictTypeChecked`'s `no-unsafe-assignment` — a **lint** error, silent to `tsc` (the same
+type-vs-lint split as the `Response.json()` hole). Since `toMatchObject` already
+partial-matches nested objects, a concrete literal (`cause: { message: "..." }`) is both
+lint-clean and stricter. Reach for asymmetric matchers only when you genuinely need fuzzy
+matching.
+
+**Capturing the outgoing request — the CORS guard.** The one test MSW can't stand in for in
+production: assert `request.headers.get("authorization")` is `null` and that `access_token`
+
+- `v` live in `new URL(request.url).searchParams`. Capture the `Request` into a
+  `let captured: Request | undefined` from inside the resolver, then after the awaited call
+  narrow with `if (!captured) throw ...` — **not** `captured!`, which `no-non-null-assertion`
+  (an error in this repo) forbids; the throw satisfies the rule _and_ narrows the type. MSW
+  does **not** enforce CORS, so this is the _only_ automated guard for unit 2a's headline
+  finding — every other query-param assertion would still pass even if we'd wrongly used a
+  header.
+
+## Open questions from 2a — resolved
+
+- **Timeout rejection shape — confirmed.** Node rejects an `AbortSignal.timeout()` abort
+  with a `DOMException` named `"TimeoutError"`. The timeout test (`delay("infinite")` +
+  `timeoutMs: 20`) passes with `kind: "timeout"`, which only holds if
+  `error instanceof DOMException && error.name === "TimeoutError"` matched — a genuine
+  confirmation, since a different name would have mapped to `network` and failed the test.
+- **`Request.json()` → `unknown` — never bit.** No handler inspects an incoming request
+  body (all matching is on URL / query / headers), so the narrowing it would have forced in
+  test code never came up.
+
+## Next
+
+Phase 2 is complete. Phase 3 — the React shell (Mantine skeleton, three routes, header
+nav) — is the first framework code in the project. See `LEARNING.md` for the roadmap.
